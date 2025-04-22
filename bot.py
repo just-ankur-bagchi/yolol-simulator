@@ -117,12 +117,21 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
+    # Debug logging
+    print(f"Message content: {message.content}")
+    print(f"Bot ID: {bot.user.id}")
+    print(f"Bot mention format: <@{bot.user.id}>")
+    print(f"Bot mention format with !: <@!{bot.user.id}>")
+
     # Check if message contains 'yolol' (case insensitive) or if the bot is mentioned
     bot_mentioned = any([
+        str(bot.user.id) in message.content,  # Check for raw ID
         f'<@{bot.user.id}>' in message.content,
         f'<@!{bot.user.id}>' in message.content,
         YOLOL_PATTERN.search(message.content) is not None
     ])
+
+    print(f"Bot mentioned: {bot_mentioned}")
 
     if bot_mentioned:
         res = random.choice(bot_quotes)
