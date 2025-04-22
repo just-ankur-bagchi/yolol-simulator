@@ -22,23 +22,24 @@ USERS_TO_TAG = [
     202251384236670977
 ]
 
-def get_quotes_from_file():
-    # read lines is bad if you have too many lines, may need change
-    with open('quotes.txt') as f:
-        quotes = f.readlines()
-        return quotes
+# Global variables for messages
+bot_quotes = []
+proactive_messages = []
 
-def get_proactive_messages():
+def load_messages():
+    global bot_quotes, proactive_messages
+    # Load quotes
+    with open('quotes.txt') as f:
+        bot_quotes = f.readlines()
+    # Load proactive messages
     with open('proactive.txt') as f:
-        messages = f.readlines()
-        return messages
+        proactive_messages = f.readlines()
 
 async def send_proactive_message():
     # Get a random user to mention
     user_id = random.choice(USERS_TO_TAG)
     # Get a random proactive message
-    messages = get_proactive_messages()
-    message = random.choice(messages).strip()
+    message = random.choice(proactive_messages).strip()
     
     # Find the server
     server = discord.utils.get(bot.guilds, name=SERVER)
@@ -57,6 +58,8 @@ async def check_for_proactive_message():
 
 @bot.event
 async def on_ready():
+    # Load messages
+    load_messages()
     # initialization
     server = discord.utils.get(bot.guilds, name=SERVER)
     print(f'{bot.user} has connected to Discord!')
@@ -64,29 +67,19 @@ async def on_ready():
     # Start the background task
     check_for_proactive_message.start()
 
-
 @bot.event
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel_send(f'very nice {member.name} dude')
 
-
 @bot.command(name='yolol', help='Chat with Yolol! -- almost the real thing')
 async def reply(context):
-    bot_quotes = get_quotes_from_file()
     res = random.choice(bot_quotes)
     await context.send(res)
-
-
-@bot.command(name='g', help='Just fucking g')
-async def reply(context):
-    await context.send('JUST FUCKING G COOKIES')
-
 
 @bot.command(name='nolol', help="I don\'t want any more Yolol in my life")
 async def clear(context):
     await context.channel.purge(limit=100, check=lambda g: ('!nolol' in g.content) or ('!yolol' in g.content) or (g.author.name == bot.user.name))
-
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -97,7 +90,6 @@ async def on_error(event, *args, **kwargs):
         else:
             raise
 
-
 @bot.event
 async def on_message(message):
     # Don't respond to the bot's own messages
@@ -106,12 +98,10 @@ async def on_message(message):
 
     # Check if message contains 'yolol' (case insensitive)
     if 'yolol' in message.content.lower():
-        bot_quotes = get_quotes_from_file()
         res = random.choice(bot_quotes)
         await message.channel.send(res)
 
     # Process commands after checking for 'yolol'
     await bot.process_commands(message)
-
 
 bot.run(TOKEN)
