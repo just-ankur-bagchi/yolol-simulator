@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 import random
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
+import re
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -26,6 +27,9 @@ USERS_TO_TAG = [
 # Global variables for messages
 bot_quotes = []
 proactive_messages = []
+
+# Regex pattern for matching yolol with any number of 'o's
+YOLOL_PATTERN = re.compile(r'yo+l+o+l', re.IGNORECASE)
 
 def load_messages():
     global bot_quotes, proactive_messages
@@ -63,6 +67,7 @@ async def send_proactive_message():
 async def check_for_proactive_message():
     # Only run between 3 PM and 7 PM India time
     if is_within_active_hours():
+        # 1/500 chance to send a message
         if random.randint(1, 100) == 1:
             await send_proactive_message()
 
@@ -73,7 +78,13 @@ async def on_ready():
     # initialization
     server = discord.utils.get(bot.guilds, name=SERVER)
     print(f'{bot.user} has connected to Discord!')
-    print(f'{server.name}(id: {server.id})')
+    if server:
+        print(f'{server.name}(id: {server.id})')
+    else:
+        print(f'Warning: Could not find server "{SERVER}". Make sure:')
+        print('1. The server name in .env matches exactly')
+        print('2. The bot has been added to the server')
+        print('3. The bot has the necessary permissions')
     # Start the background task
     check_for_proactive_message.start()
 
@@ -106,12 +117,11 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    # Check if message contains 'yolol' (case insensitive)
-    # or if the bot is mentioned
+    # Check if message contains 'yolol' (case insensitive) or if the bot is mentioned
     bot_mentioned = any([
         f'<@{bot.user.id}>' in message.content,
         f'<@!{bot.user.id}>' in message.content,
-        'yolol' in message.content.lower()
+        YOLOL_PATTERN.search(message.content) is not None
     ])
 
     if bot_mentioned:
@@ -120,6 +130,5 @@ async def on_message(message):
 
     # Process commands after checking for mentions
     await bot.process_commands(message)
-
 
 bot.run(TOKEN)
