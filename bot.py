@@ -1,6 +1,6 @@
 import os
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import random
 from dotenv import load_dotenv
 
@@ -15,6 +15,12 @@ intents.members = True  # Enable member-related events
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# List of user IDs to mention
+USERS_TO_TAG = [
+    221785345962803200,
+    216880230462128131,
+    202251384236670977
+]
 
 def get_quotes_from_file():
     # read lines is bad if you have too many lines, may need change
@@ -22,12 +28,41 @@ def get_quotes_from_file():
         quotes = f.readlines()
         return quotes
 
+def get_proactive_messages():
+    with open('proactive.txt') as f:
+        messages = f.readlines()
+        return messages
+
+async def send_proactive_message():
+    # Get a random user to mention
+    user_id = random.choice(USERS_TO_TAG)
+    # Get a random proactive message
+    messages = get_proactive_messages()
+    message = random.choice(messages).strip()
+    
+    # Find the server
+    server = discord.utils.get(bot.guilds, name=SERVER)
+    if server:
+        # Format the message with the user mention
+        formatted_message = f"<@{user_id}> {message}"
+        # Send to a random channel in the server
+        channel = random.choice(server.text_channels)
+        await channel.send(formatted_message)
+
+@tasks.loop(minutes=1)
+async def check_for_proactive_message():
+    # 1/500 chance to send a message
+    if random.randint(1, 500) == 1:
+        await send_proactive_message()
+
 @bot.event
 async def on_ready():
     # initialization
     server = discord.utils.get(bot.guilds, name=SERVER)
     print(f'{bot.user} has connected to Discord!')
     print(f'{server.name}(id: {server.id})')
+    # Start the background task
+    check_for_proactive_message.start()
 
 
 @bot.event

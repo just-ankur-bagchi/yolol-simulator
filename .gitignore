@@ -26,7 +26,6 @@ var/
 .pdm-python
 
 # PDM
-pdm.lock
 __pypackages__/
 
 # IDE
