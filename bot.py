@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands, tasks
 import random
 from dotenv import load_dotenv
+from datetime import datetime, timezone, timedelta
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -35,6 +36,14 @@ def load_messages():
     with open('proactive.txt') as f:
         proactive_messages = f.readlines()
 
+def is_within_active_hours():
+    # Get current time in UTC
+    utc_now = datetime.now(timezone.utc)
+    # Convert to India time (UTC+5:30)
+    india_time = utc_now + timedelta(hours=5, minutes=30)
+    # Check if time is between 3 PM and 7 PM
+    return 15 <= india_time.hour < 19
+
 async def send_proactive_message():
     # Get a random user to mention
     user_id = random.choice(USERS_TO_TAG)
@@ -52,9 +61,11 @@ async def send_proactive_message():
 
 @tasks.loop(minutes=1)
 async def check_for_proactive_message():
-    # 1/500 chance to send a message
-    if random.randint(1, 500) == 1:
-        await send_proactive_message()
+    # Only run between 3 PM and 7 PM India time
+    if is_within_active_hours():
+        # 1/500 chance to send a message
+        if random.randint(1, 100) == 1:
+            await send_proactive_message()
 
 @bot.event
 async def on_ready():
