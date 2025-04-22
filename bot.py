@@ -63,7 +63,6 @@ async def send_proactive_message():
 async def check_for_proactive_message():
     # Only run between 3 PM and 7 PM India time
     if is_within_active_hours():
-        # 1/500 chance to send a message
         if random.randint(1, 100) == 1:
             await send_proactive_message()
 
@@ -108,11 +107,18 @@ async def on_message(message):
         return
 
     # Check if message contains 'yolol' (case insensitive)
-    if 'yolol' in message.content.lower():
+    # or if the bot is mentioned
+    bot_mentioned = any([
+        f'<@{bot.user.id}>' in message.content,
+        f'<@!{bot.user.id}>' in message.content,
+        'yolol' in message.content.lower()
+    ])
+
+    if bot_mentioned:
         res = random.choice(bot_quotes)
         await message.channel.send(res)
 
-    # Process commands after checking for 'yolol'
+    # Process commands after checking for mentions
     await bot.process_commands(message)
 
 bot.run(TOKEN)
