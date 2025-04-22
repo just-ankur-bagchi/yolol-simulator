@@ -121,4 +121,5 @@ async def on_message(message):
     # Process commands after checking for mentions
     await bot.process_commands(message)
 
+
 bot.run(TOKEN)
