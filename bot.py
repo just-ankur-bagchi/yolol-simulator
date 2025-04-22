@@ -22,7 +22,6 @@ def get_quotes_from_file():
         quotes = f.readlines()
         return quotes
 
-
 @bot.event
 async def on_ready():
     # initialization

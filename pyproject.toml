@@ -1,0 +1,15 @@
+[project]
+name = "yolol"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Ankur Bagchi", email = "ankur.bagchi92@gmail.com"},
+]
+dependencies = ["discord>=2.3.2", "dotenv>=0.9.9"]
+requires-python = "==3.9.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false

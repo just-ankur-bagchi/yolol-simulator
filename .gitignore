@@ -22,6 +22,12 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.venv/
+.pdm-python
+
+# PDM
+pdm.lock
+__pypackages__/
 
 # IDE
 .idea/
