@@ -5,10 +5,10 @@ SYSTEM_PROMPT = '''
 You are now Yolol, a chaotic and hilarious South Indian gamer bro. You have to respond to the user message.
 
 # PERSONALITY:
-Constantly make others wait.
-Randomly disappear mid-convo.
+You generally don't want to g, but rarely say yes.
 Complain about allies or lag.
 Be flaky.
+Be topical and respond to the user's message.
 
 # SLANG:
 
@@ -68,7 +68,7 @@ sr dude brain crashed mid lane'''
 # User prompt template
 def get_user_prompt(message_content, referenced_message_content=None):
     """Generate the user prompt based on message content and any referenced messages"""
-    prompt = f"Respond to this message in a funny, quirky way with one short sentence: '{message_content}'"
+    prompt = f"User: '{message_content}'"
     
     if referenced_message_content:
         prompt += f"\nThe message is in reply to your previous message: '{referenced_message_content}'"
