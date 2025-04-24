@@ -5,10 +5,16 @@ import random
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 import re
+import openai
+from prompts import SYSTEM_PROMPT, get_user_prompt
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 SERVER = os.getenv('DISCORD_SERVER')
+OPENAI_API_KEY = os.getenv('openai-key')
+
+# Set OpenAI API key
+openai.api_key = OPENAI_API_KEY
 
 # Create intents object
 intents = discord.Intents.default()
@@ -63,6 +69,38 @@ async def send_proactive_message():
         channel = random.choice(server.text_channels)
         await channel.send(formatted_message)
 
+async def get_ai_response(message_content, referenced_message_content=None):
+    """Get a response from OpenAI API based on the message content"""
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": get_user_prompt(message_content, referenced_message_content)}
+            ],
+            max_tokens=60,
+            temperature=0.9
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error with OpenAI API: {e}")
+        # Fallback to random quote
+        return random.choice(bot_quotes).strip()
+
+async def send_bot_response(message, referenced_message=None):
+    """Send a response, using OpenAI 80% of the time and random quotes 20% of the time"""
+    # 80% chance to use OpenAI, 20% chance to use random quotes
+    if random.random() < 0.8 and OPENAI_API_KEY:
+        referenced_content = None
+        if referenced_message:
+            referenced_content = referenced_message.content
+            
+        response = await get_ai_response(message.content, referenced_content)
+    else:
+        response = random.choice(bot_quotes).strip()
+        
+    await message.channel.send(response)
+
 @tasks.loop(minutes=1)
 async def check_for_proactive_message():
     # Only run between 3 PM and 7 PM India time
@@ -95,8 +133,7 @@ async def on_member_join(member):
 
 @bot.command(name='yolol', help='Chat with Yolol! -- almost the real thing')
 async def reply(context):
-    res = random.choice(bot_quotes)
-    await context.send(res)
+    await send_bot_response(context.message)
 
 @bot.command(name='nolol', help="I don\'t want any more Yolol in my life")
 async def clear(context):
@@ -117,25 +154,33 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    # Debug logging
-    print(f"Message content: {message.content}")
-    print(f"Bot ID: {bot.user.id}")
-    print(f"Bot mention format: <@{bot.user.id}>")
-    print(f"Bot mention format with !: <@!{bot.user.id}>")
+    # Check if message references (replies to) a message from the bot
+    is_reply_to_bot = False
+    referenced_message = None
+    if message.reference and message.reference.message_id:
+        # Fetch the message being replied to
+        try:
+            channel = message.channel
+            referenced_message = await channel.fetch_message(message.reference.message_id)
+            if referenced_message.author.id == bot.user.id:
+                is_reply_to_bot = True
+        except discord.errors.NotFound:
+            # Message not found, might have been deleted
+            pass
+        except Exception as e:
+            print(f"Error fetching referenced message: {e}")
 
     # Check if message contains 'yolol' (case insensitive) or if the bot is mentioned
     bot_mentioned = any([
         str(bot.user.id) in message.content,  # Check for raw ID
         f'<@{bot.user.id}>' in message.content,
         f'<@!{bot.user.id}>' in message.content,
-        YOLOL_PATTERN.search(message.content) is not None
+        YOLOL_PATTERN.search(message.content) is not None,
+        is_reply_to_bot  # Added check for replies to the bot
     ])
 
-    print(f"Bot mentioned: {bot_mentioned}")
-
     if bot_mentioned:
-        res = random.choice(bot_quotes)
-        await message.channel.send(res)
+        await send_bot_response(message, referenced_message)
 
     # Process commands after checking for mentions
     await bot.process_commands(message)
