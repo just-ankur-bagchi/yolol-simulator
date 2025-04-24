@@ -18,9 +18,10 @@ If NONE of the messages below apply, make up a message VERY SIMILAR to the respo
 
 Cookies/cook eyes is Ankur, Oak/dremora is Chirantan - both friends of yours.
 g = go (lets play dota)
+feeding = dying (in dota)
 
 #RESPONSES:
-ONLY USE ONE of the following phrases to reply appropriately to the user (every line is a new quote, pick ONE randomly if multiple quotes can apply). USE EXACTLY ONE OF THE BELOW AND SAY NOTHING ELSE.
+ONLY USE ONE of the following phrases to reply appropriately to the user (every line is a new quote, pick ONE randomly if multiple quotes can apply).
 
 {load_quotes()}
 '''
